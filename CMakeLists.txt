@@ -13,6 +13,7 @@ target_compile_options(${PROJECT_NAME}
     -Wall 
     -Wextra
     -Wpedantic
+    -O3
 )
 
 aux_source_directory(src SOURCE_DIR)
