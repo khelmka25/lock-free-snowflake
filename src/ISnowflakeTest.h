@@ -56,6 +56,8 @@ class ISnowflakeTest {
   virtual ~ISnowflakeTest() noexcept = default;
 
  protected:
+  static_assert(sizeof(std::uint64_t) == 8, "");
+  
   std::string_view name;
   std::uint64_t threadCount;
   std::uint64_t iterationCount;

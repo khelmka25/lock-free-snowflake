@@ -21,14 +21,22 @@ struct SnowFlakeTest : ISnowflakeTest {
 
     std::cout << "Running Test: " << name << std::endl;
 
+    std::atomic_flag flag(false);
+    std::atomic<std::uint64_t> counter(0);
+
     for (auto i = 0ull; i < threadCount; i++) {
       idSets[i].resize(iterationCount);
 
-      auto callable = [&ids = idSets[i]](std::chrono::nanoseconds& elapsed_time,
-                                         std::uint64_t iterationCount) {
+      auto callable = [&flag, &counter](
+                          std::vector<std::uint64_t>& ids,
+                          std::chrono::nanoseconds& elapsed_time,
+                          std::uint64_t count) {
+        counter.fetch_add(1ull, std::memory_order_acq_rel);
+        flag.wait(false, std::memory_order_acquire);
+
         const auto start = std::chrono::system_clock::now();
         std::uint64_t result = 0ull;
-        for (auto i = 0ull; i < iterationCount; i++) {
+        for (auto i = 0ull; i < count; i++) {
           while (result = generator(0ull), result == 0ull) {
             std::this_thread::yield();
           }
@@ -39,9 +47,16 @@ struct SnowFlakeTest : ISnowflakeTest {
         elapsed_time = end - start;
       };
 
-      jThreadPool.emplace_back(callable, std::ref(threadTime_ns[i]),
-                               iterationCount);
+      jThreadPool.emplace_back(callable, std::ref(idSets[i]),
+                               std::ref(threadTime_ns[i]), iterationCount);
     }
+
+    // synchronize threads
+    while (counter.load(std::memory_order_acquire) != threadCount) {
+      std::this_thread::yield();
+    }
+    flag.test_and_set(std::memory_order_release);
+    flag.notify_all();
   };
 
   virtual void runAnalysis() override { ISnowflakeTest::runAnalysis(); }
