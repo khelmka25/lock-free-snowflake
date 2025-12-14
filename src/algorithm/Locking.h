@@ -1,9 +1,8 @@
 #pragma once
 
 #include <mutex>
-#include <thread>
 
-#include "SnowflakeTest.h"
+#include "ISnowflakeTest.h"
 
 namespace locking {
 namespace v1 {

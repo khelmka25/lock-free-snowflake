@@ -8,8 +8,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "src/SnowflakeLockfreeTest.h"
-#include "src/SnowflakeLockingTest.h"
+#include "algorithm/Lockfree.h"
+#include "algorithm/Locking.h"
 #include "src/SnowflakeTest.h"
 
 /*main is a test for the snowflake generation*/
@@ -25,17 +25,16 @@ auto main(int argc, char** argv) -> int {
   argh::parser cmdl{};
   cmdl.add_param({"-t"});
   cmdl.add_param({"-i"});
+  cmdl.add_param({"-I"});
   cmdl.parse(argv, argc);
 
   if (cmdl[{"-h", "--help"}]) {
     std::cout << "Options List:\n";
-    std::cout << "-h --help                  Help\n";
-    std::cout << "-t --threads <n>           Specify number of threads to use, "
-                 "default: 4\n";
-    std::cout << "-i --iterations <n>        Specify number of iterations per "
-                 "thread, default: 1024\n";
-    std::cout << "-lf --lockfree             Use lock free algorithm, default: "
-                 "use locking\n";
+    std::cout << "-h     Help\n";
+    std::cout << "-t <n> Number of threads to use, default: 4\n";
+    std::cout << "-i <n> Number of iterations per thread, default: 1024\n";
+    std::cout << "-I <n> Number of total iterations, default: 4096\n";
+    std::cout << "-lf    Use lock free algorithm, default: use locking\n";
     return 0;
   }
 
@@ -55,17 +54,37 @@ auto main(int argc, char** argv) -> int {
     cmdl("t") >> threadCount;
   }
 
+  if (cmdl("I")) {
+    cmdl("I") >> iterationCount;
+    iterationCount = iterationCount / threadCount;
+  }
+
   if (useLockfree) {
     using namespace std::literals::string_view_literals;
     std::initializer_list<std::unique_ptr<ISnowflakeTest>> tests = {
-        // std::make_unique<SnowFlakeTest<lockless::v1::get>>(
-        //     "lockless::v1::get"sv, threadCount, iterationCount),
-        std::make_unique<SnowFlakeTest<lockless::v2a::get>>(
-            "lockless::v2a::get"sv, threadCount, iterationCount),
-        std::make_unique<SnowFlakeTest<lockless::v2b::get>>(
-            "lockless::v2b::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockless::v3::get>>(
-        //     "lockless::v3::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v0::get>>(
+        //     "lockfree:v0::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v1::get>>(
+        //     "lockfree::v1::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v2a::get>>(
+        //     "lockfree::v2a::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v2b::get>>(
+        //     "lockfree::v2b::get"sv, threadCount, iterationCount),
+
+        // std::make_unique<SnowFlakeTest<lockfree::v3a::get>>(
+        //     "lockfree::v3a::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v3b::get>>(
+        //     "lockfree::v3b::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v3c::get>>(
+            "lockfree::v3c::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v3d::get>>(
+            "lockfree::v3d::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v3::get>>(
+        //     "lockfree::v3::get"sv, threadCount, iterationCount),
+
+        // make sequence reset on new millisecond
+        std::make_unique<SnowFlakeTest<lockfree::v4a::get>>(
+          "lockfree::v4a::get"sv, threadCount, iterationCount),
     };
 
     for (auto& test : tests) {

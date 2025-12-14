@@ -5,6 +5,7 @@
 #include <format>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -24,31 +25,29 @@ struct SnowFlakeTest : ISnowflakeTest {
     std::atomic_flag flag(false);
     std::atomic<std::uint64_t> counter(0);
 
-    for (auto i = 0ull; i < threadCount; i++) {
-      idSets[i].resize(iterationCount);
-
-      auto callable = [&flag, &counter](
-                          std::vector<std::uint64_t>& ids,
-                          std::chrono::nanoseconds& elapsed_time,
-                          std::uint64_t count) {
+    workspaces.resize(threadCount);
+    for (auto& workspace : workspaces) {
+      workspace.idSequence.resize(iterationCount);
+      auto callable = [&flag, &counter](Workspace& workspace) -> void {
+        // wait for thread synchronization
         counter.fetch_add(1ull, std::memory_order_acq_rel);
         flag.wait(false, std::memory_order_acquire);
 
-        const auto start = std::chrono::system_clock::now();
-        std::uint64_t result = 0ull;
-        for (auto i = 0ull; i < count; i++) {
-          while (result = generator(0ull), result == 0ull) {
+        const auto begin = std::chrono::steady_clock::now();
+
+        std::uint64_t val;
+        for (auto i = 0ull; i < workspace.idSequence.size(); i++) {
+          while (val = generator(0ull), val == 0ull) {
             std::this_thread::yield();
           }
-          ids[i] = result;
+          workspace.idSequence[i] = val;
         }
 
-        const auto end = std::chrono::system_clock::now();
-        elapsed_time = end - start;
+        const auto end = std::chrono::steady_clock::now();
+        workspace.duration_ns = end - begin;
       };
 
-      jThreadPool.emplace_back(callable, std::ref(idSets[i]),
-                               std::ref(threadTime_ns[i]), iterationCount);
+      jThreadPool.emplace_back(callable, std::ref(workspace));
     }
 
     // synchronize threads
