@@ -75,16 +75,18 @@ auto main(int argc, char** argv) -> int {
         //     "lockfree::v3a::get"sv, threadCount, iterationCount),
         // std::make_unique<SnowFlakeTest<lockfree::v3b::get>>(
         //     "lockfree::v3b::get"sv, threadCount, iterationCount),
-        std::make_unique<SnowFlakeTest<lockfree::v3c::get>>(
-            "lockfree::v3c::get"sv, threadCount, iterationCount),
-        std::make_unique<SnowFlakeTest<lockfree::v3d::get>>(
-            "lockfree::v3d::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v3c::get>>(
+        //     "lockfree::v3c::get"sv, threadCount, iterationCount),
+        // std::make_unique<SnowFlakeTest<lockfree::v3d::get>>(
+        //     "lockfree::v3d::get"sv, threadCount, iterationCount),
         // std::make_unique<SnowFlakeTest<lockfree::v3::get>>(
         //     "lockfree::v3::get"sv, threadCount, iterationCount),
 
         // make sequence reset on new millisecond
         std::make_unique<SnowFlakeTest<lockfree::v4a::get>>(
           "lockfree::v4a::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v4b::get>>(
+          "lockfree::v4b::get"sv, threadCount, iterationCount),
     };
 
     for (auto& test : tests) {

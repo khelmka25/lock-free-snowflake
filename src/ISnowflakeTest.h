@@ -32,7 +32,7 @@ inline std::uint64_t epoch() noexcept {
 #endif
 
 #define MAKE_SNOWFLAKE_FAST(machine_id, sequence)\
-  ((machine_id << 51) | (sequence))
+  ((machine_id << 54) | (sequence))
 
 class ISnowflakeTest {
  public:

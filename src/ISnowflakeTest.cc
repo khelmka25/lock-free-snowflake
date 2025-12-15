@@ -19,7 +19,7 @@ void ISnowflakeTest::runAnalysis() {
     }
   }
 
-  if (iterationCount <= 4096) {
+  if (iterationCount <= 4096ull) {
     std::vector<std::uint64_t> out;
     for (auto [key, count] : values) {
       out.push_back(key);
@@ -38,7 +38,11 @@ void ISnowflakeTest::runAnalysis() {
     std::ofstream file(filename);
     // extract first 48 bits only
     for (auto o : out) {
-      file << (o - minout) << std::endl;
+      auto output = (o - minout);
+      auto timestamp = output >> 12;
+      auto sequence = output & 0xfff;  
+
+      file << timestamp << ',' << std::setw(4) << std::setfill('0') << sequence << std::endl;
     }
     file.close();
   }

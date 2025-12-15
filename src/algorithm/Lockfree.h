@@ -373,4 +373,62 @@ inline u64 get(u64 machine_id) noexcept {
 
 }  // namespace v4a
 
+namespace v4b {
+using u64 = std::uint64_t;
+inline std::atomic<u64> atm_sequence(0ull);
+
+inline constexpr u64 kSequenceIdMask = (0xfffull);
+inline constexpr u64 kSequenceTimestampMask = ~(kSequenceIdMask);
+
+inline u64 get(u64 machine_id) noexcept {
+  // v4a Goal: previous iterations did not reset the sequence if the millisecond
+  // edge had been triggered
+
+  // sequence is stored in the following format:
+  // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
+
+  // acquire global sequence after any writes (includes id and timestamp)
+  auto sequence = atm_sequence.load(std::memory_order_relaxed);
+  const auto sequence_timestamp = sequence >> 12;
+  // acquire most recent system time
+  const auto system_timestamp = utils::millis();
+
+  /* Sequence's timestamp != system timestamp, one of the following has occured:
+     1. Overflow of 12 bit max sequence (sequence timestamp > system timestamp)
+     2. System timestamp has changed (sequence timestamp < system timestamp)
+  */
+  if ((sequence >> 12) != system_timestamp) {
+    // case 1. overflow of 12 bit max sequence (unlikely as thread count grows)
+    // the sequence timestamp is now greater than the system timestamp
+    // we should wait until the next millisecond (just return from function)
+    if (sequence_timestamp > system_timestamp) {
+      return 0ull;
+    }
+
+    // case 2. attempt to reset the sequence to 0
+    const auto reset_sequence = (system_timestamp << 12);
+    // if we can't reset the sequence, then we are too late, exit function
+    if (!atm_sequence.compare_exchange_strong(sequence, reset_sequence + 1ull,
+                                              std::memory_order_acq_rel,
+                                              std::memory_order_relaxed)) {
+      return 0ull;
+    }
+    // make snowflake of sequence_id = 0
+    return MAKE_SNOWFLAKE_FAST(machine_id, reset_sequence);
+  }
+
+  // update with new timestamp
+  u64 local_id = (sequence & kSequenceIdMask) | (system_timestamp << 12);
+  // https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
+  if (!atm_sequence.compare_exchange_strong(sequence, local_id + 1ull,
+                                            std::memory_order_acq_rel,
+                                            std::memory_order_relaxed)) {
+    return 0ull;
+  }
+  // we own local_id, create snowflake
+  return MAKE_SNOWFLAKE_FAST(machine_id, local_id);
+}
+
+}  // namespace v4b
+
 }  // namespace lockfree
