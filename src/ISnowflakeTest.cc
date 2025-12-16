@@ -19,7 +19,7 @@ void ISnowflakeTest::runAnalysis() {
     }
   }
 
-  if (iterationCount <= 4096ull) {
+  if (iterationCount <= 65535ull) {
     std::vector<std::uint64_t> out;
     for (auto [key, count] : values) {
       out.push_back(key);
@@ -65,7 +65,11 @@ void ISnowflakeTest::runAnalysis() {
 
   const auto totalIdCount = iterationCount * threadCount;
 
-  std::cout << "ID Count: " << values.size() << "/" << totalIdCount << "\n";
+  std::cout << "ID Count: " << values.size() << "/" << totalIdCount;
+  if (totalIdCount != values.size()) {
+    std::cout << " [FAILED]";
+  }
+  std::cout << std::endl;
 
   std::cout << "# ids/ms: " << ((double)iterationCount / averageThreadTime_ns * 1e6) << std::endl;
 

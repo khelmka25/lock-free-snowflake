@@ -9,8 +9,8 @@ namespace lockfree {
 
 namespace v0 {
 inline std::atomic<std::uint64_t> sequence(0);
-inline std::uint64_t get(std::uint64_t machine_id) noexcept {
-  (void)machine_id;
+inline std::uint64_t get(std::uint64_t mpid) noexcept {
+  (void)mpid;
   return sequence.fetch_add(1ull, std::memory_order_relaxed);
 }
 }  // namespace v0
@@ -21,7 +21,7 @@ inline std::atomic<std::uint64_t> global_time;
 inline std::atomic<std::uint64_t> sequence;
 inline std::atomic_bool time_update_flag;
 
-inline std::uint64_t get(std::uint64_t machine_id) noexcept {
+inline std::uint64_t get(std::uint64_t mpid) noexcept {
   // idea: for this thread, get the expected id
   std::uint64_t local_id = 0ull, expected_sequence;
   std::uint64_t local_time = utils::millis();
@@ -43,7 +43,7 @@ inline std::uint64_t get(std::uint64_t machine_id) noexcept {
       if (sequence.compare_exchange_strong(local_id, 1ull,
                                            std::memory_order_seq_cst)) {
         /* If we are the first to reset the sequenceId */
-        return MAKE_SNOWFLAKE(local_time - utils::epoch(), machine_id, 1ull);
+        return MAKE_SNOWFLAKE(local_time - utils::epoch(), mpid, 1ull);
       } else {
         /* We are not the first thread to reset, get retrieve the current value
          * and increment */
@@ -52,8 +52,7 @@ inline std::uint64_t get(std::uint64_t machine_id) noexcept {
         //     expected_state = false;
         //     goto clock_reset;
         // }
-        return MAKE_SNOWFLAKE(local_time - utils::epoch(), machine_id,
-                              local_id);
+        return MAKE_SNOWFLAKE(local_time - utils::epoch(), mpid, local_id);
       }
     } else {
       /*flag has not been set and we are the first to set it*/
@@ -65,11 +64,10 @@ inline std::uint64_t get(std::uint64_t machine_id) noexcept {
 
       expected_sequence = 4096ull;
       if (sequence.compare_exchange_strong(expected_sequence, 0ull)) {
-        return MAKE_SNOWFLAKE(local_time - utils::epoch(), machine_id, 0ull);
+        return MAKE_SNOWFLAKE(local_time - utils::epoch(), mpid, 0ull);
       } else {
         local_id = sequence.fetch_add(1ull);
-        return MAKE_SNOWFLAKE(local_time - utils::epoch(), machine_id,
-                              local_id);
+        return MAKE_SNOWFLAKE(local_time - utils::epoch(), mpid, local_id);
       }
     }
   }
@@ -87,7 +85,7 @@ inline std::uint64_t get(std::uint64_t machine_id) noexcept {
   //     goto clock_reset;
   // }
 
-  return MAKE_SNOWFLAKE(local_time - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE(local_time - utils::epoch(), mpid, local_id);
 }
 }  // namespace v1
 
@@ -95,7 +93,7 @@ namespace v2a {
 using u64 = std::uint64_t;
 inline std::atomic<u64> atm_sequence;
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // sequence is stored in the following format:
   // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
 
@@ -118,7 +116,7 @@ inline u64 get(u64 machine_id) noexcept {
     return 0ull;
   }
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), mpid, local_id);
 }
 }  // namespace v2a
 
@@ -126,7 +124,7 @@ namespace v2b {
 using u64 = std::uint64_t;
 inline std::atomic<u64> atm_sequence;
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // sequence is stored in the following format:
   // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
 
@@ -149,7 +147,7 @@ inline u64 get(u64 machine_id) noexcept {
     return 0ull;
   }
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), mpid, local_id);
 }
 }  // namespace v2b
 
@@ -157,7 +155,7 @@ namespace v3a {
 using u64 = std::uint64_t;
 inline std::atomic<u64> atm_sequence;
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // sequence is stored in the following format:
   // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
 
@@ -181,7 +179,7 @@ inline u64 get(u64 machine_id) noexcept {
     return 0ull;
   }
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), mpid, local_id);
 }
 }  // namespace v3a
 
@@ -189,7 +187,7 @@ namespace v3b {
 using u64 = std::uint64_t;
 inline std::atomic<u64> atm_sequence;
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // sequence is stored in the following format:
   // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
 
@@ -214,7 +212,7 @@ inline u64 get(u64 machine_id) noexcept {
   }
 
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), mpid, local_id);
 }
 }  // namespace v3b
 
@@ -222,7 +220,7 @@ namespace v3c {
 using u64 = std::uint64_t;
 inline std::atomic<u64> atm_sequence;
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // sequence is stored in the following format:
   // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
 
@@ -247,7 +245,7 @@ inline u64 get(u64 machine_id) noexcept {
   }
 
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), mpid, local_id);
 }
 }  // namespace v3c
 
@@ -255,7 +253,7 @@ namespace v3d {
 using u64 = std::uint64_t;
 inline std::atomic<u64> atm_sequence;
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // sequence is stored in the following format:
   // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
 
@@ -280,7 +278,7 @@ inline u64 get(u64 machine_id) noexcept {
   }
 
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE(timestamp - utils::epoch(), mpid, local_id);
 }
 }  // namespace v3d
 
@@ -288,11 +286,11 @@ namespace v3 {
 using u64 = std::uint64_t;
 inline std::atomic<u64> atm_sequence;
 
-#define MAKE_SNOWFLAKE_V3(time_point, machine_id, sequence_id)           \
-  (((time_point) & 0x01FF'FFFF'FFFF) | (((machine_id) & 0x03FF) << 41) | \
+#define MAKE_SNOWFLAKE_V3(time_point, mpid, sequence_id)           \
+  (((time_point) & 0x01FF'FFFF'FFFF) | (((mpid) & 0x03FF) << 41) | \
    (((sequence_id) & 0xffff'0000'0000'0000ull) << 4))
 
-u64 get(u64 machine_id) {
+inline u64 get(u64 mpid) noexcept {
   // sequence is stored in the following format:
   // |--- 16 bit id sequence ----|-------- 48 bit timestamp [ms] ----|
   // |- 4 bit pad -|- 12 bit id -|-------- 48 bit timestamp [ms] ----|
@@ -319,7 +317,7 @@ u64 get(u64 machine_id) {
   }
 
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE_V3(timestamp - utils::epoch(), machine_id, local_id);
+  return MAKE_SNOWFLAKE_V3(timestamp - utils::epoch(), mpid, local_id);
 }
 
 }  // namespace v3
@@ -331,7 +329,7 @@ inline std::atomic<u64> atm_sequence(0ull);
 inline constexpr u64 kIdMask = (0xfffull);
 inline constexpr u64 kTimestampMask = ~(kIdMask);
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // v4a Goal: previous iterations did not reset the sequence if the millisecond
   // edge had been triggered
 
@@ -356,7 +354,7 @@ inline u64 get(u64 machine_id) noexcept {
       return 0ull;
     }
     // make snowflake of sequence_id = 0
-    return MAKE_SNOWFLAKE_FAST(machine_id, reset_sequence);
+    return MAKE_SNOWFLAKE_FAST(mpid, reset_sequence);
   }
 
   // update with new timestamp
@@ -368,7 +366,7 @@ inline u64 get(u64 machine_id) noexcept {
     return 0ull;
   }
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE_FAST(machine_id, local_id);
+  return MAKE_SNOWFLAKE_FAST(mpid, local_id);
 }
 
 }  // namespace v4a
@@ -380,7 +378,7 @@ inline std::atomic<u64> atm_sequence(0ull);
 inline constexpr u64 kSequenceIdMask = (0xfffull);
 inline constexpr u64 kSequenceTimestampMask = ~(kSequenceIdMask);
 
-inline u64 get(u64 machine_id) noexcept {
+inline u64 get(u64 mpid) noexcept {
   // v4a Goal: previous iterations did not reset the sequence if the millisecond
   // edge had been triggered
 
@@ -414,7 +412,7 @@ inline u64 get(u64 machine_id) noexcept {
       return 0ull;
     }
     // make snowflake of sequence_id = 0
-    return MAKE_SNOWFLAKE_FAST(machine_id, reset_sequence);
+    return MAKE_SNOWFLAKE_FAST(mpid, reset_sequence);
   }
 
   // update with new timestamp
@@ -425,10 +423,129 @@ inline u64 get(u64 machine_id) noexcept {
                                             std::memory_order_relaxed)) {
     return 0ull;
   }
+
   // we own local_id, create snowflake
-  return MAKE_SNOWFLAKE_FAST(machine_id, local_id);
+  return MAKE_SNOWFLAKE_FAST(mpid, local_id);
 }
 
 }  // namespace v4b
+
+namespace v4c {
+using u64 = std::uint64_t;
+inline std::atomic<u64> atm_CompactSequence(0ull);
+
+inline constexpr u64 kSequenceNumberMask = (0xfffull);
+inline constexpr u64 kSequenceTimestampMask = ~(kSequenceNumberMask);
+
+inline u64 get(u64 mpid) noexcept {
+  // v4a Goal: previous iterations did not reset the sequence if the millisecond
+  // edge had been triggered
+
+  // sequence is stored in the following format:
+  // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
+
+  // acquire global sequence after any writes (includes id and timestamp)
+  auto sequence = atm_CompactSequence.load(std::memory_order_acquire);
+  auto const sequenceTimestamp = sequence >> 12;
+  // acquire most recent system time
+  auto const systemTimestamp = utils::millis();
+
+  /* Sequence's timestamp != system timestamp, one of the following has occured:
+     1. Overflow of 12 bit max sequence (sequence timestamp > system timestamp)
+     2. System timestamp has changed (sequence timestamp < system timestamp)
+  */
+
+  /* CANNOT BE OPTIMIZED, MUST WAIT UNTIL NEXT MILLISECOND */
+  // case 1. overflow of 12 bit max sequence (unlikely as thread count grows)
+  // the sequence timestamp is now greater than the system timestamp
+  // we should wait until the next millisecond (just return from function)
+  if (sequenceTimestamp > systemTimestamp) {
+    return 0ull;
+  }
+
+  // case 2. start of new millisecond, attempt to reset the sequence to 0
+  if (sequenceTimestamp < systemTimestamp) {
+    auto const resetSequence = (systemTimestamp << 12);
+    // if we can't reset the sequence, then we are too late, exit function
+    if (!atm_CompactSequence.compare_exchange_strong(
+            sequence, resetSequence + 1ull, std::memory_order_acq_rel,
+            std::memory_order_relaxed)) {
+      // if we fail to reset the sequence to 0, then another thread has already
+      // done so, take the current sequence and do something with it?
+      return 0ull;
+    }
+    // make snowflake of sequence_id = 0
+    return MAKE_SNOWFLAKE_FAST(mpid, resetSequence);
+  }
+
+  // case 3. sequence timestamp is the same as the sequence timestamp
+  // update with new timestamp
+  const u64 local_id =
+      (sequence & kSequenceNumberMask) | (systemTimestamp << 12);
+  // https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
+  if (!atm_CompactSequence.compare_exchange_strong(sequence, local_id + 1ull,
+                                                   std::memory_order_acq_rel,
+                                                   std::memory_order_relaxed)) {
+    return 0ull;
+  }
+  // we own local_id, create snowflake
+  return MAKE_SNOWFLAKE_FAST(mpid, local_id);
+}
+
+}  // namespace v4c
+
+namespace v4d {
+using u64 = std::uint64_t;
+inline std::atomic<u64> atm_CompactSequence(0ull);
+
+inline constexpr u64 kSequenceNumberMask = (0xfffull);
+inline constexpr u64 kSequenceTimestampMask = ~(kSequenceNumberMask);
+
+inline u64 get(u64 mpid) noexcept {
+  // v4a Goal: previous iterations did not reset the sequence if the millisecond
+  // edge had been triggered
+
+  // sequence is stored in the following format:
+  // |-------- 52 bit timestamp [ms] ----|-- 12 bit id sequence ----|
+
+  // acquire global sequence after any writes (includes id and timestamp)
+  auto sequence = atm_CompactSequence.load(std::memory_order_acquire);
+  auto const sequenceTimestamp = sequence >> 12;
+  // acquire most recent system time
+  auto const systemTimestamp = utils::millis();
+
+  /* Sequence's timestamp != system timestamp, one of the following has occured:
+     1. Overflow of 12 bit max sequence (sequence timestamp > system timestamp)
+     2. System timestamp has changed (sequence timestamp < system timestamp)
+  */
+
+  /* CANNOT BE OPTIMIZED, MUST WAIT UNTIL NEXT MILLISECOND */
+  // case 1. overflow of 12 bit max sequence (unlikely as thread count grows)
+  // the sequence timestamp is now greater than the system timestamp
+  // we should wait until the next millisecond (just return from function)
+  if (sequenceTimestamp > systemTimestamp) {
+    return 0ull;
+  }
+
+  // case 2. start of new millisecond, attempt to reset the sequence to 0
+  if (sequenceTimestamp < systemTimestamp) {
+    auto const resetSequence = (systemTimestamp << 12);
+    // attempt to reset sequence, else, spillover into case 3.
+    // https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
+    if (atm_CompactSequence.compare_exchange_strong(
+            sequence, resetSequence + 1ull, std::memory_order_acq_rel,
+            std::memory_order_relaxed)) {
+      // make snowflake of sequence number = 0
+      return MAKE_SNOWFLAKE_FAST(mpid, resetSequence);
+    }
+  }
+
+  // // case 3. sequence timestamp is the same as the sequence timestamp
+  // https://en.cppreference.com/w/cpp/atomic/atomic/fetch_add
+  sequence = atm_CompactSequence.fetch_add(1ull, std::memory_order_acq_rel);
+  return MAKE_SNOWFLAKE_FAST(mpid, sequence);
+}
+
+}  // namespace v4d
 
 }  // namespace lockfree

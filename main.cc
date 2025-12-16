@@ -87,6 +87,10 @@ auto main(int argc, char** argv) -> int {
           "lockfree::v4a::get"sv, threadCount, iterationCount),
         std::make_unique<SnowFlakeTest<lockfree::v4b::get>>(
           "lockfree::v4b::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v4c::get>>(
+          "lockfree::v4c::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v4d::get>>(
+          "lockfree::v4d::get"sv, threadCount, iterationCount),
     };
 
     for (auto& test : tests) {
