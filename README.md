@@ -100,17 +100,19 @@ int main() {
 ```
 
 ## Performance
-This library contains a number of lockfree algorithms that were tested for multithreaded use for t=1 to t=16. 16 tests of generating 4,096,000 ids per thread were run for each algorithm. The results of the tests are shown below with IDs per millisecond on the y-axis (higher is better) vs thread count on the x-axis.*
+This library contains a number of lockfree algorithms that were tested for multithreaded use for ```t=1``` to ```t=16```. Tests of generating ```4,096,000``` ids total were run for each algorithm. The results of the tests are shown below with IDs per millisecond on the y-axis (higher is better) vs thread count on the x-axis.*
 
-![test1](images/test1.png)
+![image1](images/image1.png)
 
-Similarly, 16 tests of generating 4,096 ids total were run for each algorithm. The results of the tests are shown below with IDs per millisecond on the y-axis (higher is better) vs thread count on the x-axis.
+![image3](images/image3.png)
 
-![test2](images/test2.png)
+The table below shows the results from the testing.
 
-From these tests, it is clear that the lockfree::v4d::get algorithm is the superior algorithm, meeting all design constraints with the highest snowflake ID throughput. This algorithm provided by default with the library for use in your program.
+![image4](images/image4.png)
 
-*algorithms that failed to meet the design constrains are omitted from the results.
+From these tests, it is clear that the ```lockfree::v4d``` algorithm is the superior algorithm, meeting all design constraints with the highest snowflake ID throughput for most use cases. This algorithm is provided by default with the library for use in your program.
+
+*algorithms that failed to meet the design constraints are omitted from the results.
 
 ## Building Tests
 Clone the repo to your machine and pull the required submodules
@@ -139,6 +141,5 @@ After building the program, it may be used with the following commands:
 -t <n>      # number of threads to run the tests with
 -i <n>      # number of ids to generate per thread
 -I <n>      # number of total ids to generate
--a <name>   # name algorithm to run, default: all
--v          # use verbose output 
+-lf         # test the lockfree algorithms
 ```

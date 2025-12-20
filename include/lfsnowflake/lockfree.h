@@ -7,8 +7,21 @@
 namespace lf {
 
 #ifndef MAKE_SNOWFLAKE_FAST
-#define MAKE_SNOWFLAKE_FAST(machine_id, sequence) \
-  ((machine_id << 54) | (sequence))
+// INPUT FORMAT - sequence number:
+// |---------------52 bit timestamp---------------|--12 bit sequence number--|
+// |                                              x                          |
+// |-----------------------------64 bit sequence-----------------------------|
+// INPUT FORMAT - mpid:
+// |----------5 bit machine id----------|----------5 bit process id----------|
+// |                                    x                                    |
+// |-----------------------------10 bit mpid---------------------------------|
+// OUTPUT FORMAT - snowflake:
+// |--1 bit--|--41 bit timestamp--|--10 bit MPID--|--12 bit sequence number--|
+// |                              x               x                          |
+// |-----------------------------64 bit snowflake----------------------------|
+#define MAKE_SNOWFLAKE_FAST(mpid, sequence)                                    \
+  (((sequence) bitand utils::kTimestampMask) << 22) bitor ((mpid) << 10) bitor \
+      (((sequence) bitand utils::kSequenceNumberMask))
 #endif
 
 using u64 = std::uint64_t;
@@ -27,25 +40,25 @@ inline std::uint64_t epoch() noexcept {
   return 1'735'711'200'000ull;
 }
 
-inline constexpr u64 kSequenceNumberMask = (4095ull << 0);
-inline constexpr u64 kMpidMask = (1023ull << 12);
-inline constexpr u64 kTimestampMask = (2199023255551ull << 22);
+inline constexpr u64 kSequenceNumberMask = (4'095ull << 0);
+inline constexpr u64 kMpidMask = (1'023ull << 12);
+inline constexpr u64 kTimestampMask = (2'199'023'255'551ull << 22);
 
 static_assert((kSequenceNumberMask xor kMpidMask xor kTimestampMask) !=
-              18446744073709551615ull);
+              18'446'744'073'709'551'615ull);
 static_assert((kSequenceNumberMask xor kMpidMask xor kTimestampMask) ==
-              9223372036854775807ull);
+              9'223'372'036'854'775'807ull);
 
 inline u64 getTimestamp(u64 snowflake) {
-  return (snowflake & kTimestampMask) >> 22;
+  return (snowflake bitand kTimestampMask) >> 22;
 }
 
 inline u64 getMpid(u64 snowflake) {
-  return (snowflake & kMpidMask) & 12;
+  return (snowflake bitand kMpidMask) > 12;
 }
 
 inline u64 getSequence(u64 snowflake) {
-  return (snowflake & kSequenceNumberMask) >> 0;
+  return (snowflake bitand kSequenceNumberMask) >> 0;
 }
 
 }  // namespace utils

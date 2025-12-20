@@ -26,6 +26,7 @@ auto main(int argc, char** argv) -> int {
   cmdl.add_param({"-t"});
   cmdl.add_param({"-i"});
   cmdl.add_param({"-I"});
+  cmdl.add_param({"-lf"});
   cmdl.parse(argv, argc);
 
   if (cmdl[{"-h", "--help"}]) {
@@ -40,7 +41,7 @@ auto main(int argc, char** argv) -> int {
 
   /* Settings */
   bool useLockfree = false;
-  if (cmdl[{"-lf", "--lockfree "}]) {
+  if (cmdl["lf"]) {
     useLockfree = true;
   }
 
@@ -62,35 +63,35 @@ auto main(int argc, char** argv) -> int {
   if (useLockfree) {
     using namespace std::literals::string_view_literals;
     std::initializer_list<std::unique_ptr<ISnowflakeTest>> tests = {
-        // std::make_unique<SnowFlakeTest<lockfree::v0::get>>(
-        //     "lockfree:v0::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockfree::v1::get>>(
-        //     "lockfree::v1::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockfree::v2a::get>>(
-        //     "lockfree::v2a::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockfree::v2b::get>>(
-        //     "lockfree::v2b::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v0::get>>(
+            "lockfree::v0a::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v1::get>>(
+            "lockfree::v1a::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v2a::get>>(
+            "lockfree::v2a::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v2b::get>>(
+            "lockfree::v2b::get"sv, threadCount, iterationCount),
 
-        // std::make_unique<SnowFlakeTest<lockfree::v3a::get>>(
-        //     "lockfree::v3a::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockfree::v3b::get>>(
-        //     "lockfree::v3b::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockfree::v3c::get>>(
-        //     "lockfree::v3c::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockfree::v3d::get>>(
-        //     "lockfree::v3d::get"sv, threadCount, iterationCount),
-        // std::make_unique<SnowFlakeTest<lockfree::v3::get>>(
-        //     "lockfree::v3::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v3a::get>>(
+            "lockfree::v3a::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v3b::get>>(
+            "lockfree::v3b::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v3c::get>>(
+            "lockfree::v3c::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v3d::get>>(
+            "lockfree::v3d::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<lockfree::v3::get>>(
+            "lockfree::v3::get"sv, threadCount, iterationCount),
 
         // make sequence reset on new millisecond
         std::make_unique<SnowFlakeTest<lockfree::v4a::get>>(
-          "lockfree::v4a::get"sv, threadCount, iterationCount),
+            "lockfree::v4a::get"sv, threadCount, iterationCount),
         std::make_unique<SnowFlakeTest<lockfree::v4b::get>>(
-          "lockfree::v4b::get"sv, threadCount, iterationCount),
+            "lockfree::v4b::get"sv, threadCount, iterationCount),
         std::make_unique<SnowFlakeTest<lockfree::v4c::get>>(
-          "lockfree::v4c::get"sv, threadCount, iterationCount),
+            "lockfree::v4c::get"sv, threadCount, iterationCount),
         std::make_unique<SnowFlakeTest<lockfree::v4d::get>>(
-          "lockfree::v4d::get"sv, threadCount, iterationCount),
+            "lockfree::v4d::get"sv, threadCount, iterationCount),
     };
 
     for (auto& test : tests) {
@@ -100,8 +101,7 @@ auto main(int argc, char** argv) -> int {
   } else {
     using namespace std::literals::string_view_literals;
     std::initializer_list<std::unique_ptr<ISnowflakeTest>> tests = {
-        std::make_unique<SnowFlakeTest<locking::v1::get>>(
-            "locking::v1::get"sv, threadCount, iterationCount),
+        std::make_unique<SnowFlakeTest<locking::v1::get>>("locking::v1::get"sv, threadCount, iterationCount),
     };
 
     for (auto& test : tests) {

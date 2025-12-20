@@ -19,33 +19,33 @@ void ISnowflakeTest::runAnalysis() {
     }
   }
 
-  if (iterationCount <= 65535ull) {
-    std::vector<std::uint64_t> out;
-    for (auto [key, count] : values) {
-      out.push_back(key);
-    }
-    std::sort(out.begin(), out.end());
-    const auto minout = (out.front() & 0x01FF'FFFF'FFFF);
+  // if (iterationCount <= 65535ull) {
+  //   std::vector<std::uint64_t> out;
+  //   for (auto [key, count] : values) {
+  //     out.push_back(key);
+  //   }
+  //   std::sort(out.begin(), out.end());
+  //   const auto minout = (out.front() & 0x01FF'FFFF'FFFF);
 
-    for (auto [key, count] : values) {
-      if (count != 1ull) {
-        std::cout << "duplicate: " << (key - minout) << " count: " << count << std::endl;
-      }
-    }
+  //   for (auto [key, count] : values) {
+  //     if (count != 1ull) {
+  //       std::cout << "duplicate: " << (key - minout) << " count: " << count << std::endl;
+  //     }
+  //   }
 
-    std::string filename(name);
-    filename.append(".txt");
-    std::ofstream file(filename);
-    // extract first 48 bits only
-    for (auto o : out) {
-      auto output = (o - minout);
-      auto timestamp = output >> 12;
-      auto sequence = output & 0xfff;  
+  //   std::string filename(name);
+  //   filename.append(".txt");
+  //   std::ofstream file(filename);
+  //   // extract first 48 bits only
+  //   for (auto o : out) {
+  //     auto output = (o - minout);
+  //     auto timestamp = output >> 12;
+  //     auto sequence = output & 0xfff;  
 
-      file << timestamp << ',' << std::setw(4) << std::setfill('0') << sequence << std::endl;
-    }
-    file.close();
-  }
+  //     file << timestamp << ',' << std::setw(4) << std::setfill('0') << sequence << std::endl;
+  //   }
+  //   file.close();
+  // }
 
   std::locale comma_locale(std::locale(), new comma_numpunct());
   std::cout.imbue(comma_locale);
@@ -71,7 +71,21 @@ void ISnowflakeTest::runAnalysis() {
   }
   std::cout << std::endl;
 
-  std::cout << "# ids/ms: " << ((double)iterationCount / averageThreadTime_ns * 1e6) << std::endl;
+  double idRate = ((double)iterationCount / averageThreadTime_ns * 1e6);
+  std::cout << "# ids/ms: " << idRate << std::endl;
 
   std::cout << "--------------------------------" << std::endl << std::endl;
+
+  // output to file for analysis
+  std::string path = std::format("../out/{}-t{}.txt", name, threadCount);
+  std::ofstream file(path);
+  if (!file.is_open()) {
+    return;
+  }
+  if (values.size() != totalIdCount) {
+    file << 0.0;
+  } else {
+    file << idRate;
+  }
+  file.close();
 }
